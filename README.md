@@ -1,336 +1,244 @@
-# HR-Skill 智能招聘助手
+# HR Skill — 智能招聘助手
 
 <div align="center">
 
-[![GitHub stars](https://img.shields.io/github/stars/L3n3L/hr-skill?style=flat-square)](https://github.com/L3n3L/hr-skill/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/L3n3L/hr-skill?style=flat-square)](https://github.com/L3n3L/hr-skill/network)
-[![License](https://img.shields.io/github/license/L3n3L/hr-skill?style=flat-square)](https://github.com/L3n3L/hr-skill/blob/main/LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/L3n3L/hr-skill?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?style=flat-square)](https://www.python.org/)
 
 </div>
 
-> 基于 AI 的 HR 全流程招聘工具包，涵盖简历解析、候选人评估、面试安排等核心功能，开箱即用。
-
-[English](README.md) · [文档](#使用指南) · [更新日志](CHANGELOG.md)
+> AI 驱动的 HR 招聘工具包。大模型是判断大脑，工具是眼睛和知识库。
 
 ---
 
-## 📖 项目简介
-
-HR-Skill 是一款面向 HR 和招聘从业者的 AI 辅助工具，旨在将繁琐的简历筛选、候选人评估等工作自动化，让你专注于更有价值的面试和人才决策。
-
-### 核心能力
-
-- 🔍 **智能解析** - 支持 PDF/Word/图片简历自动解析
-- 📊 **量化评估** - 多维度打分，告别主观臆断
-- ⚡ **批量处理** - 一键筛选百份简历
-- 📝 **自动生成** - 面试邀请、评估报告一键生成
-- 🔗 **系统集成** - 对接主流 ATS 系统
-
----
-
-## 🛠️ 技术栈
-
-| 类别 | 技术 |
-|:---:|:---:|
-| 语言 | Python 3.8+ |
-| 解析 | PyMuPDF, python-docx, pytesseract |
-| ATS | Moka, Workday, 薪人薪事等 |
-
----
-
-## 📁 项目结构
+## 设计理念
 
 ```
-hr-skill/
-├── SKILL.md                      # 技能定义文件
-├── scripts/
-│   ├── hr_tools.py               # 核心工具集
-│   ├── resume_parser.py          # 简历解析器
-│   ├── email_generator.py        # 邮件生成器
-│   └── ats_connector.py         # ATS 连接器
-├── references/
-│   ├── resume_analysis.md        # 简历分析框架
-│   └── interview_guide.md        # 面试评估指南
-├── assets/                       # 资源文件
-│   └── examples/                 # 示例数据
-├── tests/                        # 测试用例
-└── docs/                         # 详细文档
+大模型 = HR 的判断大脑
+  理解语义、专业评估、撰写报告、对比候选人
+
+MCP 工具 = HR 的眼睛和知识库
+  读取文件、查询行情、提供评估框架和风险清单
+
+真人 = 最终决策者
+  阅读分析结果，做出面试/录用/归档决策
 ```
+
+工具**不做**自动解析、自动打分、自动筛选。判断交给大模型，决策交给真人。
 
 ---
 
-## 🚀 快速开始
+## 快速开始（Claude Code 用户）
 
-### 安装依赖
+### 1. 前提条件
+
+| 依赖 | 说明 | 必需 |
+|------|------|------|
+| Python 3.9+ | MCP 服务器运行环境 | 是 |
+| PyMuPDF | PDF 文本提取 | 是 |
+| Tesseract OCR | 图片型 PDF 的文字识别 | 仅 OCR 场景 |
+
+### 2. 克隆并安装
 
 ```bash
-# 克隆项目
 git clone https://github.com/L3n3L/hr-skill.git
 cd hr-skill
 
-# 安装依赖
-pip install PyMuPDF python-docx Pillow pytesseract requests
+# Python 依赖（必须）
+pip install PyMuPDF python-docx pytesseract Pillow mcp
+
+# Tesseract OCR 引擎（可选，仅图片型 PDF 需要）
+# Windows: 下载安装 https://github.com/UB-Mannheim/tesseract/releases
+#          安装时勾选"中文简体"语言包
+# Mac:     brew install tesseract tesseract-lang
+# Linux:   sudo apt install tesseract-ocr tesseract-ocr-chi-sim
 ```
 
-### 基础用法
+### 3. 在 Claude Code 中使用
 
-```python
-from scripts.hr_tools import (
-    parse_resume_text,      # 解析简历
-    parse_job_description, # 解析 JD
-    hard_filter,            # 硬性筛选
-    score_resume,            # 打分评估
-    flag_risks,             # 风险标记
-    summarize_candidate,    # 生成面试备忘
-    generate_interview_invitation  # 生成邀请邮件
-)
+项目已包含 `.mcp.json`，Claude Code 打开项目时会**自动发现并启动** MCP 服务器。
 
-# 1. 解析简历
-resume = parse_resume_text("张三，5年经验，熟练Python...")
-
-# 2. 解析岗位要求
-jd = parse_job_description("招Python工程师，本科，3年经验...")
-
-# 3. 硬性条件筛查
-filter_result = hard_filter(resume, jd)
-if not filter_result['passed']:
-    print(f"不通过原因: {filter_result['reasons']}")
-
-# 4. 打分评估
-scores = score_resume(resume, jd)
-print(f"综合评分: {scores['total']}/100")
-
-# 5. 风险标记
-risks = flag_risks(resume)
-
-# 6. 生成面试备忘
-memo = summarize_candidate(resume, jd, scores, risks)
-
-# 7. 生成邀请邮件
-email = generate_interview_invitation(resume, jd, "2024-01-15 14:00")
 ```
+打开 Claude Code → 直接对话 → 8 个 HR 工具立即可用
+```
+
+无需任何额外配置。
 
 ---
 
-## 📋 功能列表
+## MCP 工具清单（8 个）
 
-### 一、输入层
+### 数据获取
 
-| 函数 | 说明 |
-|:---|:---|
-| `load_resume_file` | 读取 PDF/Word/图片简历 |
-| `parse_resume_text` | 文本转结构化 JSON |
-| `parse_job_description` | JD 解析为结构化数据 |
-| `load_candidate_batch` | 批量加载文件夹内简历 |
+| 工具 | 说明 | 适用场景 |
+|------|------|----------|
+| `load_resume_file` | 读取 PDF/Word/图片/TXT 简历，图片型 PDF 自动 OCR | 单份简历加载 |
+| `load_candidate_batch` | 批量加载文件夹内所有简历 | 批量筛选 |
 
-### 二、分析决策层
+### 知识参考
 
-| 函数 | 说明 |
-|:---|:---|
-| `hard_filter` | 硬性条件筛查 |
-| `score_resume` | 多维度量化打分 |
-| `rank_candidates` | 候选人排序 |
-| `flag_risks` | 风险标记 |
-| `detect_inconsistency` | 信息矛盾检测 |
-| `compare_candidates` | 候选人对比 |
-| `summarize_candidate` | 生成面试备忘 |
-
-### 三、输出执行层
-
-| 函数 | 说明 |
-|:---|:---|
-| `generate_interview_invitation` | 生成面试邀请 |
-| `generate_rejection_email` | 生成拒信 |
-| `push_to_ats` | 推送至 ATS 系统 |
-| `schedule_interview` | 自动预约面试 |
-| `send_hr_report` | 发送决策报告 |
-
-### 四、知识增强层
-
-| 函数 | 说明 |
-|:---|:---|
-| `search_company_background` | 查询公司背景 |
-| `skill_normalizer` | 技能名称标准化 |
-| `culture_fit_analyzer` | 文化契合度分析 |
-| `market_salary_query` | 查询薪资范围 |
-
----
-
-## 💡 使用示例
-
-### 示例一：批量招聘流程
-
-```python
-from scripts.hr_tools import (
-    load_candidate_batch,
-    parse_job_description,
-    rank_candidates,
-    summarize_candidate,
-    generate_interview_invitation
-)
-from scripts.ats_connector import push_to_ats_enhanced
-
-# 1. 批量加载简历
-candidates = load_candidate_batch("resumes/")
-
-# 2. 解析 JD
-jd = parse_job_description(open("jd.txt").read())
-
-# 3. 批量排序
-ranked = rank_candidates([c['parsed'] for c in candidates], jd)
-
-# 4. 获取 Top 候选人
-top_candidates = [r for r in ranked if r.get('passed')][:5]
-
-# 5. 逐一处理
-for candidate in top_candidates:
-    resume = candidate['resume']
-    memo = summarize_candidate(resume, jd, candidate['scores'])
-    invitation = generate_interview_invitation(resume, jd, "2024-01-15 14:00")
-    
-    # 推送到 ATS
-    push_to_ats_enhanced(resume, jd, 'moka')
-    
-    print(memo)
-```
-
-### 示例二：候选人对比
-
-```python
-from scripts.hr_tools import compare_candidates
-
-# 对比多个候选人
-result = compare_candidates([resume1, resume2, resume3], jd)
-print(result)
-```
-
-### 示例三：薪资与文化分析
-
-```python
-from scripts.hr_tools import (
-    market_salary_query,
-    culture_fit_analyzer,
-    skill_normalizer
-)
-
-# 查询市场薪资
-salary = market_salary_query("Python后端", "北京", 5)
-
-# 文化契合度
-culture = culture_fit_analyzer(resume, ["创新", "协作", "用户导向"])
-
-# 技能标准化
-skills = skill_normalizer(["js", "vue", "k8s", "ML"])
-```
-
----
-
-## 📊 输出示例
-
-### 候选人评估报告
-
-```
-## 候选人评估报告
-
-### 基本信息
-- 姓名: 张三
-- 学历: 本科
-- 工作年限: 5年
-
-### 综合评分: 85/100 (A类)
-| 维度 | 得分 |
+| 工具 | 说明 |
 |------|------|
-| 技能匹配度 | 90 |
-| 经验匹配度 | 85 |
-| 稳定性 | 80 |
-| 教育背景 | 85 |
-| 成长潜力 | 80 |
+| `get_evaluation_guide` | 5 维评估框架、A/B/C 分层标准、STAR 面试问题模板 |
+| `get_risk_checklist` | 风险信号清单（高/中/低三档），含语境豁免说明 |
+| `get_skill_alias_map` | 技能别名映射（js→JavaScript, k8s→Kubernetes 等） |
+| `market_salary_query` | 按岗位+城市+年限查询市场薪资参考范围 |
 
-### 优势亮点
-1. 精通 Python + Go，技术栈与岗位高度匹配
-2. 有大规模分布式系统经验
+### 辅助框架
 
-### 风险提示
-1. [MEDIUM] 近期有2次短期工作经历
+| 工具 | 说明 |
+|------|------|
+| `get_compare_prompt` | 候选人横向对比维度模板 |
+| `get_report_prompt` | 给用人经理的决策报告段落框架 |
 
-### 综合建议
-强烈推荐面试
+---
+
+## 典型使用流程
+
+```
+1. 加载简历
+   你说："帮我读一下 assets/测试.pdf"
+
+2. 大模型评估
+   你说："根据评估框架，给这份简历打分"
+
+3. 横向对比
+   你说："用对比框架，比较这 3 位候选人"
+
+4. 生成报告
+   你说："生成给用人经理的推荐报告"
+```
+
+大模型会自动调用对应工具获取参考框架，结合简历文本完成分析。
+
+---
+
+## 环境配置详解
+
+### Python 依赖
+
+```bash
+pip install PyMuPDF python-docx pytesseract Pillow mcp
+```
+
+| 包名 | 用途 |
+|------|------|
+| `PyMuPDF` | PDF 文本提取与 OCR 图片渲染 |
+| `python-docx` | Word 文档读取 |
+| `pytesseract` | OCR 引擎 Python 封装 |
+| `Pillow` | 图片处理与 OCR 图片预处理 |
+| `mcp` | MCP 协议服务端框架 |
+
+### Tesseract OCR 安装（可选）
+
+> 如果你的简历都是文字型 PDF 或 Word/TXT，**不需要安装 Tesseract**。
+> 只有遇到纯图片型 PDF 时才需要。
+
+**Windows：**
+
+1. 下载安装包：[UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/releases)
+2. 运行安装程序，在语言选择步骤勾选 **"中文简体"（Chinese Simplified）**
+3. 默认安装到 `C:\Program Files\Tesseract-OCR\`，服务器会自动探测该路径
+4. 如果安装到自定义路径，确保路径在代码的自动探测列表中（支持 C/D/E 盘）
+
+**Mac：**
+
+```bash
+brew install tesseract tesseract-lang
+```
+
+**Linux：**
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-chi-sim
+```
+
+### 验证安装
+
+```bash
+# 验证 Python 依赖
+python -c "import fitz; import pytesseract; from docx import Document; print('OK')"
+
+# 验证 Tesseract（命令行）
+tesseract --version
+
+# 验证完整 OCR 流程
+python -c "
+from scripts.hr_tools import load_resume_file
+text = load_resume_file('assets/测试.pdf')
+print(f'识别 {len(text)} 字符，OK')
+"
 ```
 
 ---
 
-## 🔧 高级配置
+## 常见问题
 
-### ATS 系统对接
+### Q: Claude Code 中工具调用报 "AbortError"？
 
-```python
-from scripts.ats_connector import ATSFactory
+A: 通常是因为首次调用时冷导入大型库超时。重启 MCP 服务器即可（`Ctrl+Shift+P` → `Reload Window`）。项目已做启动预热，正常情况不会出现。
 
-# 创建连接器
-connector = ATSFactory.create('moka', api_key='your_key')
+### Q: PDF 识别出来是乱码？
 
-# 推送候选人
-result = connector.push_candidate(candidate_data)
+A: 检查 Tesseract 是否安装、中文简体语言包是否勾选。运行 `tesseract --list-langs` 应该能看到 `chi_sim`。
+
+### Q: OCR 识别准确度低？
+
+A: OCR 对图片质量敏感，确保简历清晰。如果是扫描件，建议用 300dpi 以上扫描。
+
+### Q: 不想装 Tesseract 能用吗？
+
+A: 如果简历是文字型 PDF、Word 或 TXT，完全不需要 Tesseract。只有纯图片型 PDF 才触发 OCR。
+
+---
+
+## 项目结构
+
 ```
-
-### 自定义评分权重
-
-```python
-# 自定义各维度权重
-weights = {
-    'skill_match': 0.40,       # 技能匹配度
-    'experience_match': 0.25, # 经验匹配度
-    'stability': 0.15,        # 稳定性
-    'education': 0.10,        # 学历
-    'growth_potential': 0.10  # 潜力
-}
-
-ranked = rank_candidates(candidates, jd, weights=weights)
+hr-skill/
+├── .mcp.json                  # Claude Code MCP 自动发现配置
+├── mcp_server.py              # MCP 服务入口
+├── CLAUDE.md                  # 项目语言规范
+├── SKILL.md                   # Skill 入口定义
+├── scripts/
+│   ├── hr_tools.py            # 核心工具集（8 个工具）
+│   └── __init__.py
+├── references/
+│   ├── resume_analysis.md     # 简历分析参考框架
+│   └── interview_guide.md     # 面试评估指南
+├── assets/                    # 示例简历
+└── README.md
 ```
 
 ---
 
-## 📝 更新日志
+## 贡献
 
-### v1.0.0 (2024-01)
-- ✨ 初始版本发布
-- ✅ 支持简历解析、JD 解析
-- ✅ 支持多维评估、打分排序
-- ✅ 支持邮件生成、ATS 对接
-
----
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request。
 
 1. Fork 本仓库
 2. 创建分支 (`git checkout -b feature/xxx`)
-3. 提交更改 (`git commit -m 'Add xxx'`)
-4. 推送分支 (`git push origin feature/xxx`)
-5. 创建 Pull Request
+3. 提交更改
+4. 推送并创建 Pull Request
 
 ---
 
-## 📄 许可证
+## 许可证
 
-本项目采用 [MIT License](LICENSE) 许可证。
+[MIT License](LICENSE)
 
 ---
 
-## 🙏 致谢
+## 致谢
 
-- [PyMuPDF](https://github.com/pymupdf/PyMuPDF) - PDF 处理
-- [python-docx](https://github.com/python-openxml/python-docx) - Word 文档处理
-- [pytesseract](https://github.com/madmaze/pytesseract) - OCR 识别
+- [PyMuPDF](https://github.com/pymupdf/PyMuPDF) — PDF 处理
+- [pytesseract](https://github.com/madmaze/pytesseract) — OCR 识别
+- [python-docx](https://github.com/python-openxml/python-docx) — Word 文档处理
 
 ---
 
 <div align="center">
 
 **如果这个项目对你有帮助，请点个 ⭐ Star！**
-
-Made with ❤️ by [Your Name](https://github.com/L3n3L)
 
 </div>

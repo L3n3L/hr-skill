@@ -37,6 +37,9 @@ htmlcov/
 .env
 .env.local
 
+# Claude Code 本地数据
+.claude/
+
 # 临时文件
 *.tmp
 *.temp

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "hr-skill": {
+      "command": "python",
+      "args": [
+        "mcp_server.py"
+      ],
+      "env": {},
+      "description": "HR智能招聘助手 - 简历解析、候选人评估、面试准备"
+    }
+  }
+}
