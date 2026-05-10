@@ -60,10 +60,13 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="load_candidate_batch",
-            description="批量加载文件夹内所有简历",
+            description="批量加载文件夹内所有简历（多线程并行，图片型 PDF 密集场景建议调高线程数）",
             inputSchema={
                 "type": "object",
-                "properties": {"folder_path": {"type": "string", "description": "文件夹路径"}},
+                "properties": {
+                    "folder_path": {"type": "string", "description": "文件夹路径"},
+                    "max_workers": {"type": "integer", "description": "并行线程数（默认 4，OCR 密集可设 6-8）", "default": 4}
+                },
                 "required": ["folder_path"]
             }
         ),
@@ -127,6 +130,60 @@ async def list_tools() -> list[Tool]:
                 "required": []
             }
         ),
+        Tool(
+            name="extract_resume_fields",
+            description="从简历文本中提取 16 个结构化关键字段（基本信息/求职期望/教育/工作/项目/技能/获奖/语言/社交链接/自我评价），引导大模型完成提取",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "resume_text": {"type": "string", "description": "简历纯文本内容（由 load_resume_file 获取）"}
+                },
+                "required": ["resume_text"]
+            }
+        ),
+        Tool(
+            name="clean_ocr_text",
+            description="引导大模型对 OCR 识别文本进行语义级修正（字形误识/拆分合并/噪声符号），保留原文信息不增不减",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ocr_text": {"type": "string", "description": "OCR 识别后的简历文本（由 load_resume_file 获取）"}
+                },
+                "required": ["ocr_text"]
+            }
+        ),
+        Tool(
+            name="parse_jd",
+            description="引导大模型对岗位描述进行结构化解析，提取岗位职责、任职要求、薪资范围等关键字段",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "jd_text": {"type": "string", "description": "岗位描述原文（由用户粘贴或提供）"}
+                },
+                "required": ["jd_text"]
+            }
+        ),
+        Tool(
+            name="get_match_prompt",
+            description="返回简历-JD 匹配分析框架，引导大模型从硬性条件、技能覆盖、经验匹配、软技能等维度对照评估",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": []
+            }
+        ),
+        Tool(
+            name="generate_interview_questions",
+            description="基于简历（和可选的岗位描述）生成个性化面试问题，自动识别项目亮点、技能声明、经历疑点，使用 STAR+DETAIL 方法论设计追问",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "resume_text": {"type": "string", "description": "简历纯文本内容（由 load_resume_file 获取）"},
+                    "jd_text": {"type": "string", "description": "岗位描述文本（可选，由 parse_jd 获取或直接粘贴）"}
+                },
+                "required": ["resume_text"]
+            }
+        ),
     ]
 
 
@@ -135,6 +192,11 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     from scripts.hr_tools import (
         load_resume_file,
         load_candidate_batch,
+        extract_resume_fields,
+        clean_ocr_text,
+        parse_jd,
+        get_match_prompt,
+        generate_interview_questions,
         get_evaluation_guide,
         get_risk_checklist,
         get_skill_alias_map,
@@ -148,7 +210,12 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         if name == "load_resume_file":
             result = await anyio.to_thread.run_sync(load_resume_file, arguments["file_path"])
         elif name == "load_candidate_batch":
-            result = await anyio.to_thread.run_sync(load_candidate_batch, arguments["folder_path"])
+            result = await anyio.to_thread.run_sync(
+                load_candidate_batch,
+                arguments["folder_path"],
+                None,
+                arguments.get("max_workers", 4)
+            )
         elif name == "get_evaluation_guide":
             result = get_evaluation_guide()
         elif name == "get_risk_checklist":
@@ -165,6 +232,19 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             result = get_compare_prompt(arguments.get("candidate_count", 2))
         elif name == "get_report_prompt":
             result = get_report_prompt()
+        elif name == "extract_resume_fields":
+            result = extract_resume_fields(arguments["resume_text"])
+        elif name == "clean_ocr_text":
+            result = clean_ocr_text(arguments["ocr_text"])
+        elif name == "parse_jd":
+            result = parse_jd(arguments["jd_text"])
+        elif name == "get_match_prompt":
+            result = get_match_prompt()
+        elif name == "generate_interview_questions":
+            result = generate_interview_questions(
+                arguments["resume_text"],
+                arguments.get("jd_text", "")
+            )
         else:
             return [TextContent(type="text", text=f"未知工具: {name}")]
 

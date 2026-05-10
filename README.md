@@ -66,14 +66,18 @@ pip install PyMuPDF python-docx pytesseract Pillow mcp
 
 ---
 
-## MCP 工具清单（8 个）
+## MCP 工具清单（13 个）
 
 ### 数据获取
 
 | 工具 | 说明 | 适用场景 |
 |------|------|----------|
-| `load_resume_file` | 读取 PDF/Word/图片/TXT 简历，图片型 PDF 自动 OCR | 单份简历加载 |
+| `load_resume_file` | 读取 PDF/Word/图片/TXT 简历，自动 OCR + 图像预处理 | 单份简历加载 |
 | `load_candidate_batch` | 批量加载文件夹内所有简历 | 批量筛选 |
+| `parse_jd` | 引导大模型对岗位描述结构化解析，提取 10 个关键字段 | JD 需求梳理 |
+| `extract_resume_fields` | 从简历文本提取 16 个结构化关键字段 | 快速出信息表 |
+| `clean_ocr_text` | 引导大模型语义修正 OCR 错误 | 提升识别质量 |
+| `generate_interview_questions` | 基于简历生成个性化面试问题 + 追问链（STAR+DETAIL） | 面试准备 |
 
 ### 知识参考
 
@@ -88,6 +92,7 @@ pip install PyMuPDF python-docx pytesseract Pillow mcp
 
 | 工具 | 说明 |
 |------|------|
+| `get_match_prompt` | 简历-JD 匹配分析框架（硬性条件/技能矩阵/综合匹配度） |
 | `get_compare_prompt` | 候选人横向对比维度模板 |
 | `get_report_prompt` | 给用人经理的决策报告段落框架 |
 
@@ -99,13 +104,25 @@ pip install PyMuPDF python-docx pytesseract Pillow mcp
 1. 加载简历
    你说："帮我读一下 assets/测试.pdf"
 
-2. 大模型评估
-   你说："根据评估框架，给这份简历打分"
+2. 修正 OCR 错误
+   你说："修正一下 OCR 识别的错误"
 
-3. 横向对比
+3. 提取关键信息
+   你说："提取结构化的字段信息"
+
+4. 解析岗位描述
+   你说："解析这份 JD，提取关键要求"
+
+5. 简历-JD 匹配
+   你说："帮我做简历和 JD 的匹配分析"
+
+6. 生成面试问题
+   你说："基于这份简历生成面试问题"
+
+7. 横向对比
    你说："用对比框架，比较这 3 位候选人"
 
-4. 生成报告
+8. 生成报告
    你说："生成给用人经理的推荐报告"
 ```
 
@@ -118,7 +135,7 @@ pip install PyMuPDF python-docx pytesseract Pillow mcp
 ### Python 依赖
 
 ```bash
-pip install PyMuPDF python-docx pytesseract Pillow mcp
+pip install PyMuPDF python-docx pytesseract Pillow mcp opencv-python
 ```
 
 | 包名 | 用途 |
@@ -127,6 +144,7 @@ pip install PyMuPDF python-docx pytesseract Pillow mcp
 | `python-docx` | Word 文档读取 |
 | `pytesseract` | OCR 引擎 Python 封装 |
 | `Pillow` | 图片处理与 OCR 图片预处理 |
+| `opencv-python` | OTSU 二值化 + 去噪，大幅提升 OCR 质量（推荐） |
 | `mcp` | MCP 协议服务端框架 |
 
 ### Tesseract OCR 安装（可选）
@@ -201,7 +219,7 @@ hr-skill/
 ├── CLAUDE.md                  # 项目语言规范
 ├── SKILL.md                   # Skill 入口定义
 ├── scripts/
-│   ├── hr_tools.py            # 核心工具集（8 个工具）
+│   ├── hr_tools.py            # 核心工具集（13 个工具）
 │   └── __init__.py
 ├── references/
 │   ├── resume_analysis.md     # 简历分析参考框架
